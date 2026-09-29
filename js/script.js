@@ -1,127 +1,58 @@
-const response = await fetch("https://pokeapi.co/api/v2");
+const API_URL = "https://tyradex.app/api/v1";
 
-class Pokemon {
-    constructor(id, image, name, apiTypes, attack, defense, special_attack, special_defense, speed) {
-        this.id = id;
-        this.image = image;
-        this.name = name;
-        this.apiTypes = apiTypes;
-        this.stats = {
-            attack: attack,
-            defense: defense,
-            special_attack: special_attack,
-            special_defense: special_defense,
-            speed: speed
-        };
-    }
+const select = document.getElementById("generation-select");
+const list = document.getElementById("pokemon-list");
 
-    displayCard() {
+function createCard(pokemon) {
+  const types = pokemon.types
+    ? pokemon.types.map((type) => type.name).join(" / ")
+    : "";
 
-        const article = document.createElement("article");
-        
-          article.innerHTML = `
+  const image = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.pokedex_id}.png`;
+
+  const card = document.createElement("article");
+  card.innerHTML = `
     <figure>
       <picture>
-        <img src="${pokemon.image}" alt="Image ${pokemon.name}" />
+        <img src="${image}" alt="Image ${pokemon.name.fr}" loading="lazy" />
       </picture>
       <figcaption>
-        <span class="types">${pokemon.apiTypes[0].name}</span>
-        <h2>${pokemon.name}</h2>
+        <span class="types">${types}</span>
+        <h2>${pokemon.name.fr}</h2>
         <ol>
-          <li>Points de vie : ${pokemon.stats.HP}</li>
-          <li>Attaque : ${pokemon.stats.attack}</li>
-          <li>Défense : ${pokemon.stats.defense}</li>
-          <li>Attaque spécial : ${pokemon.stats.special_attack}</li>
-          <li>Défense spécial : ${pokemon.stats.special_defense}</li>
-          <li>Vitesse : ${pokemon.stats.speed}</li>
+          <li>Points de vie : ${pokemon.stats.hp}</li>
+          <li>Attaque : ${pokemon.stats.atk}</li>
+          <li>Défense : ${pokemon.stats.def}</li>
+          <li>Attaque spécial : ${pokemon.stats.spe_atk}</li>
+          <li>Vitesse : ${pokemon.stats.vit}</li>
         </ol>
       </figcaption>
     </figure>
   `;
-
-  return article;
-    }
+  return card;
 }
 
-class Type {
-    constructor(id, name, color) {
-        this.id = id;
-        this.name = name;
-        this.color = this.getColorHexa();
-    }
+async function loadData(generation) {
+  try {
+    const response = await fetch(`${API_URL}/gen/${generation}`);
+    const data = await response.json();
 
-    getColorHexa() {
-        return this.color;
-    }
-}
+    const pokemons = Array.isArray(data) ? data : data.pokemons;
 
-async function getPokemons() {
-  const response = await fetch("./data/data.json");
-  const pokemons = await response.json();
-  console.log(pokemons);
-  return pokemons;
-}
+    list.innerHTML = "";
 
-getPokemons();
-
-function createPokemonCard(pokemon) {
-  // 1. Créer l'élément article
-  const article = document.createElement("article");
-
-  // 2 & 3. Remplir l'article avec innerHTML avec template literals
-  article.innerHTML = `
-    <figure>
-      <picture>
-        <img src="${pokemon.image}" alt="Image ${pokemon.name}" />
-      </picture>
-      <figcaption>
-        <span class="types">${pokemon.apiTypes[0].name}</span>
-        <h2>${pokemon.name}</h2>
-        <ol>
-          <li>Points de vie : ${pokemon.stats.HP}</li>
-          <li>Attaque : ${pokemon.stats.attack}</li>
-          <li>Défense : ${pokemon.stats.defense}</li>
-          <li>Attaque spécial : ${pokemon.stats.special_attack}</li>
-          <li>Défense spécial : ${pokemon.stats.special_defense}</li>
-          <li>Vitesse : ${pokemon.stats.speed}</li>
-        </ol>
-      </figcaption>
-    </figure>
-  `;
-
-    let figure = article.querySelector('figure');
-  switch (pokemon.apiTypes[0].name) {
-    case "Plante":
-      figure.style.backgroundColor = "green";
-      article.style.borderColor = `green`;
-      break;
-    case "Feu":  
-      figure.style.backgroundColor = "orange";
-      article.style.borderColor = `orange`;
-      break;
-    case "Eau":
-      figure.style.backgroundColor = "blue";
-      article.style.borderColor = `blue`;
-      break;
-    default:
-        figure.style.backgroundColor = "gray";
+    pokemons.forEach((pokemon) => {
+      list.appendChild(createCard(pokemon));
+    });
+  } catch (error) {
+    console.error("Impossible de charger les Pokémon :", error);
   }
-
-  return article;
 }
 
-async function displayPokemons() {
-  const pokemons = await getPokemons();
 
-  // 4. Sélectionner la balise main
-  const main = document.querySelector("main");
-  main.innerHTML = "";
+loadData(1);
 
-  // 5. Créer et ajouter un article par pokémon
-  pokemons.forEach((pokemon) => {
-    const article = createPokemonCard(pokemon);
-    main.appendChild(article);
-  });
-}
-
-displayPokemons();
+select.addEventListener("change", () => {
+  console.log(select.value);
+  loadData(select.value);
+});
